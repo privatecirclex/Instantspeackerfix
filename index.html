@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <title>Sonic Clean Pro | Speaker Cleaner, Water Ejector & Audio Diagnostics</title>
+    <meta name="description" content="The ultimate utility to eject water from speakers, test stereo spatial audio, check microphone clarity, and generate precision frequency tones. Based on acoustic physics.">
+    <meta name="keywords" content="speaker cleaner, water ejector, remove water from phone, test stereo speakers, phase testing, microphone test, frequency generator, 165hz sound">
+    <meta name="author" content="Sonic Clean Pro">
+    
+    <style>
+        :root {
+            --bg-deep: #050505;
+            --bg-surface: #0f0f13;
+            --primary: #00F2FF;
+            --primary-dim: rgba(0, 242, 255, 0.1);
+            --secondary: #7000FF;
+            --accent: #FF0055;
+            --text-main: #ffffff;
+            --text-muted: #8F9BB3;
+            --glass-bg: rgba(20, 20, 25, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --shadow-glow: 0 0 20px rgba(0, 242, 255, 0.15);
+        }
+
+        body {
+    background-color: var(--bg-deep);
+    background-image: 
+        radial-gradient(circle at 50% 0%, #1a1a2e 0%, transparent 60%),
+        radial-gradient(circle at 50% 100%, #120024 0%, transparent 60%);
+    background-attachment: fixed; /* KEEPS BACKGROUND STILL */
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100dvh; /* PREVENTS JUMP ON KEYBOARD OPEN */
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+}
+
+
+        .app-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            padding-bottom: 120px;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0 10px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #fff 0%, #a5a5a5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--primary-dim);
+            color: var(--primary);
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-top: 12px;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+        }
+
+        .status-pill::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--primary);
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: 28px;
+            padding: 24px;
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group {
+            display: flex;
+            background: rgba(0,0,0,0.3);
+            padding: 4px;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .tab-btn.active {
+            background: #252525;
+            color: var(--primary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .eject-container {
+            height: 280px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .main-btn {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #1a1a1a, #0d0d0d);
+            border: 1px solid #333;
+            box-shadow: 
+                inset 0 4px 15px rgba(255,255,255,0.05),
+                inset 0 -10px 20px rgba(0,0,0,0.8),
+                0 20px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .main-btn svg {
+            width: 42px;
+            height: 42px;
+            fill: #555;
+            transition: 0.3s;
+            margin-bottom: 8px;
+        }
+
+        .main-btn span {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #555;
+            letter-spacing: 1.5px;
+            transition: 0.3s;
+        }
+
+        .main-btn.active {
+            border-color: var(--primary);
+            box-shadow: 
+                inset 0 0 40px rgba(0, 242, 255, 0.1),
+                0 0 60px rgba(0, 242, 255, 0.25);
+            transform: scale(0.95);
+        }
+
+        .main-btn.active svg { fill: var(--primary); transform: scale(1.1); }
+        .main-btn.active span { color: var(--primary); }
+
+        .ripple {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .main-btn.active ~ .ripple {
+            animation: rippleEffect 2s infinite cubic-bezier(0, 0, 0.2, 1);
+        }
+        .main-btn.active ~ .ripple:nth-child(2) { animation-delay: 0.6s; }
+        .main-btn.active ~ .ripple:nth-child(3) { animation-delay: 1.2s; }
+
+        @keyframes rippleEffect {
+            0% { width: 160px; height: 160px; opacity: 0.6; border-width: 4px; }
+            100% { width: 400px; height: 400px; opacity: 0; border-width: 0px; }
+        }
+
+        /* --- TECH EXPLAINER (SEO + KNOWLEDGE) --- */
+        .tech-explainer {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 15px;
+        }
+
+        .tech-explainer summary {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.9;
+        }
+        
+        .tech-explainer summary::after {
+            content: "▼";
+            font-size: 0.6rem;
+            transition: 0.3s;
+        }
+        
+        .tech-explainer[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        .tech-content {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+        }
+
+        .tech-content h4 {
+            color: #fff;
+            margin: 0 0 5px 0;
+            font-size: 0.9rem;
+        }
+
+        .tech-content strong { color: #ddd; }
+
+        /* SPATIAL PAD */
+        .pad-area {
+            width: 100%;
+            height: 260px;
+            background: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center;
+            border-radius: 20px;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: inset 0 0 60px rgba(0,0,0,0.8);
+            touch-action: none;
+            overflow: hidden;
+        }
+
+        .speaker-icon {
+            position: absolute;
+            font-size: 1.5rem;
+            opacity: 0.2;
+            transition: 0.2s;
+            pointer-events: none;
+        }
+        .spk-tl { top: 15px; left: 15px; }
+        .spk-tr { top: 15px; right: 15px; }
+        .spk-bl { bottom: 15px; left: 15px; }
+        .spk-br { bottom: 15px; right: 15px; }
+
+        .head-icon {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            opacity: 0.3;
+            pointer-events: none;
+            filter: grayscale(1);
+        }
+
+        .drag-node {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #fff, var(--secondary));
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 30px var(--secondary);
+            cursor: grab;
+            z-index: 20;
+            border: 2px solid rgba(255,255,255,0.8);
+        }
+        .drag-node:active { cursor: grabbing; transform: translate(-50%, -50%) scale(1.1); }
+
+        .select-box {
+            background: #000;
+            color: #fff;
+            border: 1px solid #333;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            outline: none;
+        }
+
+        /* PHASE BUTTON STYLES */
+        .phase-btn {
+            border: 1px solid #333;
+            color: var(--text-muted);
+            background: transparent;
+            border-radius: 12px;
+            padding: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+        }
+        .phase-btn.warning {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(255, 0, 85, 0.1);
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.2);
+        }
+
+        /* CANVAS */
+        #micCanvas {
+            width: 100%;
+            height: 120px;
+            background: #080808;
+            border-radius: 16px;
+            border: 1px solid #333;
+        }
+
+        /* SLIDER */
+        .slider-group {
+            position: relative;
+            padding: 10px 0;
+        }
+        
+        .freq-value {
+            font-size: 3.5rem;
+            font-weight: 800;
+            text-align: center;
+            color: var(--primary);
+            text-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
+            margin: 10px 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .freq-label {
+            text-align: center;
+            height: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #222;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 20px var(--primary);
+            cursor: pointer;
+            margin-top: -10px;
+            border: 2px solid var(--primary);
+        }
+        
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: linear-gradient(90deg, #222, #333);
+            border-radius: 4px;
+        }
+
+        .ad-slot {
+            width: 100%;
+            height: 90px;
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(255,255,255,0.02),
+                rgba(255,255,255,0.02) 10px,
+                rgba(255,255,255,0.04) 10px,
+                rgba(255,255,255,0.04) 20px
+            );
+            border: 1px dashed #333;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: #444;
+            letter-spacing: 1px;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid #333;
+            background: #111;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        .action-btn:active { transform: scale(0.98); }
+        .action-btn.active {
+            background: #222;
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.15);
+        }
+   
+/* --- NEW STYLES FOR INFO FLIP (3D EFFECT) --- */
+
+.info-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-muted);
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    z-index: 5; /* Ensure clickable */
+}
+
+.info-btn:hover {
+    background: var(--primary);
+    color: #000;
+    border-color: var(--primary);
+    box-shadow: 0 0 10px var(--primary-dim);
+}
+
+/* Hide Info View by default */
+.info-view {
+    display: none;
+    /* No animation needed here, the card flip handles it */
+}
+
+/* When flipped, hide Main and show Info */
+.glass-card.flipped .main-view {
+    display: none;
+}
+
+.glass-card.flipped .info-view {
+    display: block;
+}
+
+.glass-card.flipped .info-btn {
+    background: rgba(255, 0, 85, 0.2);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+/* Quick Guide on Main View */
+.quick-guide {
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid var(--primary);
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.quick-guide strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+.quick-guide .warning {
+    color: var(--accent);
+    font-weight: 700;
+    display: block; /* Force warning to new line */
+    margin-top: 4px;
+}
+
+/* --- PREMIUM SAFETY ALERT --- */
+.safety-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(5, 5, 5, 0.85); /* Deep dark overlay */
+    backdrop-filter: blur(12px);      /* Heavy blur behind */
+    z-index: 9999;                    /* On top of everything */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.safety-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.safety-card {
+    width: 85%;
+    max-width: 380px;
+    background: linear-gradient(145deg, #121212, #0a0a0a);
+    border: 1px solid var(--accent); /* Pink/Red Warning Border */
+    box-shadow: 0 0 40px rgba(255, 0, 85, 0.2);
+    border-radius: 24px;
+    padding: 30px;
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.safety-overlay.active .safety-card {
+    transform: scale(1);
+}
+
+/* Decorative Glow Line at Top */
+.safety-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 4px;
+    background: var(--accent);
+    box-shadow: 0 0 15px var(--accent);
+}
+
+.safety-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    display: inline-block;
+    filter: drop-shadow(0 0 10px var(--accent));
+    animation: pulseWarning 2s infinite;
+}
+
+@keyframes pulseWarning {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.safety-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 10px;
+    letter-spacing: -0.5px;
+}
+
+.safety-text {
+    font-size: 0.9rem;
+    color: #aaa;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    text-align: left;
+    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    border-radius: 12px;
+}
+
+.safety-list {
+    text-align: left;
+    margin: 10px 0;
+    padding-left: 20px;
+    color: #ccc;
+}
+
+.safety-list li { margin-bottom: 8px; }
+
+.agree-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(255, 0, 85, 0.4);
+    transition: 0.2s;
+}
+
+.agree-btn:hover {
+    background: #ff1f6d;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 0, 85, 0.5);
+}
+
+.agree-btn:active { transform: scale(0.98); }
+/* --- PREMIUM FOOTER --- */
+.app-footer {
+    margin-top: 40px;
+    padding: 20px;
+    text-align: center;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.footer-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+.footer-link:hover {
+    color: var(--primary);
+    text-shadow: 0 0 10px var(--primary-dim);
+}
+
+.copyright {
+    font-size: 0.75rem;
+    color: #444;
+}
+
+/* --- GENERIC INFO MODALS --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.modal-content {
+    width: 90%;
+    max-width: 500px;
+    max-height: 85dvh; /* ADAPTS TO KEYBOARD HEIGHT */
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 24px;
+    padding: 30px;
+    position: relative;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    transform: translateY(0); /* REMOVED JUMP ANIMATION TO FIX KEYBOARD GLITCH */
+    display: flex;
+    flex-direction: column;
+}
+
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-close {
+    position: absolute;
+    top: 20px; right: 20px;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: #fff;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover { background: var(--accent); }
+
+.modal-header h2 {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 1.5rem;
+}
+
+.modal-body {
+    color: #aaa;
+    line-height: 1.6;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.modal-body h3 { color: #fff; margin-top: 20px; font-size: 1.1rem; }
+.modal-body p { margin-bottom: 15px; }
+
+/* Contact Form Styling */
+.contact-input {
+    width: 100%;
+    background: #080808;
+    border: 1px solid #333;
+    padding: 12px;
+    border-radius: 10px;
+    color: #fff;
+    margin-bottom: 10px;
+    box-sizing: border-box; /* Fix padding width issue */
+}
+.contact-input:focus { border-color: var(--primary); outline: none; }
+
+    </style>
+</head>
+<body>
+<div class="safety-overlay" id="safetyModal">
+    <div class="safety-card">
+        <div class="safety-icon">⚠️</div>
+        <div class="safety-title">System Caution</div>
+        
+        <div class="safety-text">
+            This utility generates <strong>high-intensity frequencies</strong>. To prevent hardware damage or hearing loss, please adhere to safety protocols.
+            <ul class="safety-list">
+                <li>Do not use with headphones in ears.</li>
+                <li>Avoid prolonged exposure to high frequencies.</li>
+                <li>Keep volume moderate for initial testing.</li>
+            </ul>
+        </div>
+
+        <button class="agree-btn" onclick="acceptSafety()">I UNDERSTAND & AGREE</button>
+    </div>
+</div>
+<div class="modal-overlay" id="modal-about">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeModal('modal-about')">×</button>
+        <div class="modal-header"><h2>About Sonic Clean</h2></div>
+        <div class="modal-body">
+            <p><strong>Sonic Clean Pro</strong> is the premier browser-based utility for audio hardware maintenance. We utilize the <strong>Web Audio API</strong> to generate precise sine waves and impulse signals.</p>
+            <h3>How It Works</h3>
+            <p>For water ejection, we use a specific 165Hz frequency that matches the resonant frequency of most mobile speaker assemblies. This creates enough air displacement to physically push trapped water droplets out of the speaker grill.</p>
+            <h3>Our Mission</h3>
+            <p>To provide a free, privacy-focused alternative to paid apps. We believe in "Right to Repair" – giving you the tools to diagnose and fix your audio issues without visiting a service center.</p>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-privacy">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeModal('modal-privacy')">×</button>
+        <div class="modal-header"><h2>Privacy Policy</h2></div>
+        <div class="modal-body">
+            <p>Your privacy is our top priority. Unlike other tools, <strong>Sonic Clean Pro operates 100% Client-Side.</strong></p>
+            <h3>Microphone Usage</h3>
+            <p>When you use the "Mic Clarity Check," we access your microphone stream solely to visualize the audio spectrum on your screen. <strong>No audio data is ever recorded, saved, or uploaded to any server.</strong> The stream is destroyed the moment you close the tab.</p>
+            <h3>Cookies & Data</h3>
+            <p>We use local storage only to remember your preferences (like the Safety Alert agreement). We do not track your personal identity.</p>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-contact">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeModal('modal-contact')">×</button>
+        <div class="modal-header"><h2>Contact Us</h2></div>
+        <div class="modal-body">
+            <p>Have a feature request or found a bug? We'd love to hear from you.</p>
+            <form onsubmit="event.preventDefault(); alert('Message sent! (Demo)'); closeModal('modal-contact');">
+                <input type="text" class="contact-input" placeholder="Your Name" required>
+                <input type="email" class="contact-input" placeholder="Your Email" required>
+                <textarea class="contact-input" rows="4" placeholder="How can we help?" required></textarea>
+                <button type="submit" class="action-btn active">SEND MESSAGE</button>
+            </form>
+            <p style="margin-top:20px; font-size:0.8rem; text-align:center; opacity:0.6;">
+                Email us directly at: <br> support@pookiequizlive.blogspot.com
+            </p>
+        </div>
+    </div>
+</div>
+<div class="modal-overlay" id="modal-terms">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeModal('modal-terms')">×</button>
+        <div class="modal-header"><h2>Terms of Use</h2></div>
+        <div class="modal-body">
+            <p><strong>Last Updated: February 2026</strong></p>
+            <h3>1. Acceptance</h3>
+            <p>By using Sonic Clean Pro, you agree that you are using this tool at your own risk. We are not responsible for any hardware damage caused by high-volume frequency playback.</p>
+            <h3>2. Usage Limits</h3>
+            <p>This tool is provided "as-is" for personal diagnostics. You may not reverse-engineer the audio synthesis code for commercial repackaging.</p>
+            <h3>3. Health Safety</h3>
+            <p>You agree to adhere to the safety warnings (no headphones, safe distance) presented upon site entry.</p>
+        </div>
+    </div>
+</div>
+
+<div class="app-container">
+    
+    <header>
+        <h1>Sonic Clean Pro</h1>
+        <div class="status-pill">System Ready</div>
+    </header>
+
+        <div class="glass-card" id="card-eject">
+        <div class="card-header">
+            <h3 class="card-title">💧 Liquid Ejector</h3>
+            <button class="info-btn" onclick="toggleInfo('card-eject')">?</button>
+        </div>
+
+        <div class="main-view">
+            <div class="quick-guide">
+    <strong>What:</strong> Uses sound waves to push water out of grills.<br>
+    <strong>Best:</strong> Max volume, phone facing down.<br>
+    <span class="warning">⚠️ Warning: Do not use with headphones in ears.</span>
+</div>
+
+            <div class="control-group">
+                <button onclick="setEjectMode('standard')" class="tab-btn active" id="mode-standard">Standard</button>
+                <button onclick="setEjectMode('deep')" class="tab-btn" id="mode-deep">Deep Shake</button>
+                <button onclick="setEjectMode('dust')" class="tab-btn" id="mode-dust">Dust Aid</button>
+            </div>
+
+            <div class="eject-container">
+                <div class="main-btn" id="ejectBtn" onclick="toggleEjector()">
+                    <svg viewBox="0 0 24 24"><path d="M12,22c4.97,0,9-4.03,9-9c0-4.97-9-13-9-13S3,8.03,3,13C3,17.97,7.03,22,12,22z M12,19c-3.31,0-6-2.69-6-6c0-2.8,4.38-9.13,6-11.23C13.62,3.87,18,10.2,18,13 C18,16.31,15.31,19,12,19z"/></svg>
+                    <span id="ejectText">ACTIVATE</span>
+                </div>
+                <div class="ripple"></div>
+                <div class="ripple"></div>
+                <div class="ripple"></div>
+            </div>
+        </div>
+
+        <div class="info-view">
+            <div class="tech-content">
+                <h4>The Physics of Water Ejection</h4>
+                <p>This tool uses <strong>Resonance</strong> and <strong>Acoustic Displacement</strong>. Water trapped in speaker grills creates a seal due to <strong>surface tension</strong>. By playing a specific low-frequency sine/sawtooth wave (approx <strong>165Hz</strong>), the speaker cone generates intense air pressure vibrations. This force exceeds the water's surface tension, atomizing droplets and pushing them outward.</p>
+                <h4>Best Results Guide</h4>
+                <ul>
+                    <li><strong>Volume:</strong> Set your device to <strong>100% Volume</strong> for maximum air displacement.</li>
+                    <li><strong>Orientation:</strong> Face the speaker <strong>downward</strong> so gravity aids the acoustic force.</li>
+                    <li><strong>Dust Mode:</strong> Use a soft brush gently while the pulse plays to dislodge static dust.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+ <div class="ad-slot">SPONSORED CONTENT AREA</div>
+        <div class="glass-card" id="card-spatial">
+        <div class="card-header">
+            <h3 class="card-title">🎧 Spatial Diagnostics</h3>
+            <button class="info-btn" onclick="toggleInfo('card-spatial')">?</button>
+        </div>
+
+        <div class="main-view">
+            <div class="quick-guide">
+    <strong>What:</strong> Tests stereo balance and speaker wiring.<br>
+    <strong>Best:</strong> Sit perfectly centered between speakers.
+</div>
+
+            <div style="margin-bottom: 20px; text-align: right;">
+                 <select id="speakerConfig" class="select-box" onchange="updateSpatialConfig()">
+                    <option value="stereo">Stereo (2.0)</option>
+                    <option value="quad">Quad (4.0)</option>
+                    <option value="5.1">Surround (5.1)</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button id="btn-phase" class="phase-btn" onclick="togglePhase()">Phase: Normal</button>
+                <button id="btn-sweep" class="phase-btn" onclick="runSweep()">Run Sweep</button>
+            </div>
+
+            <div class="pad-area" id="spatialPad">
+                <div class="head-icon">👤</div>
+                <div class="speaker-icon spk-tl" id="icon-tl">🔊 FL</div>
+                <div class="speaker-icon spk-tr" id="icon-tr">🔊 FR</div>
+                <div class="speaker-icon spk-bl" id="icon-bl">🔊 RL</div>
+                <div class="speaker-icon spk-br" id="icon-br">🔊 RR</div>
+                <div class="drag-node" id="dragNode"></div>
+            </div>
+
+            <div class="info-text" style="text-align: center; margin-top: 20px;">
+                Position: <span id="spatialCoords" style="color: var(--primary)">Center</span>
+            </div>
+        </div>
+
+        <div class="info-view">
+            <div class="tech-content">
+                <h4>Understanding Phase Cancellation</h4>
+                <p>This module tests speaker polarity using the <strong>Web Audio API ChannelMerger</strong>. When you click "Invert Phase", the right channel's waveform is flipped 180°. In physics, adding a positive wave to a negative wave results in <strong>Destructive Interference</strong> (silence). If sound persists or sounds "hollow" during inversion, your speakers may be wired incorrectly or utilizing DSP processing.</p>
+                <h4>Testing Guide</h4>
+                <ul>
+                    <li><strong>Positioning:</strong> Sit exactly in the center (equilateral triangle) between speakers.</li>
+                    <li><strong>Stereo Image:</strong> Drag the node. You should hear sound panning clearly from Left to Right without bleeding into the other channel.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="ad-slot">SPONSORED CONTENT AREA</div>
+
+        <div class="glass-card" id="card-mic">
+        <div class="card-header">
+            <h3 class="card-title">🎙️ Mic Clarity Check</h3>
+            <button class="info-btn" onclick="toggleInfo('card-mic')">?</button>
+        </div>
+        
+        <div class="main-view">
+            <div class="quick-guide">
+    <strong>What:</strong> Visualizes your microphone's frequency range.<br>
+    <strong>Best:</strong> Test in a quiet room to see true noise floor.<br>
+    <span class="warning">⚠️ Red Bars = Distortion (Too Loud)</span>
+</div>
+
+            <canvas id="micCanvas" width="600" height="150"></canvas>
+            <button id="micBtn" class="action-btn" onclick="toggleMic()">START MIC TEST</button>
+        </div>
+
+        <div class="info-view">
+            <div class="tech-content">
+                <h4>FFT Spectrum Analysis</h4>
+                <p>This visualizer uses a <strong>Fast Fourier Transform (FFT)</strong> algorithm. It breaks down your voice into individual frequency bins (Low to High). A healthy microphone diaphragm captures the full spectrum. </p>
+                <h4>Diagnostic Guide</h4>
+                <ul>
+                    <li><strong>Muffled Sound:</strong> If the bars on the right (High Frequencies) are very low even when hissing "Ssss", your mic port may be clogged with debris.</li>
+                    <li><strong>Clipping:</strong> If bars turn <span style="color:#FF0055">RED</span>, you are too close or the gain is too high, causing distortion.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+ <div class="ad-slot">SPONSORED CONTENT AREA</div>
+        <div class="glass-card" id="card-freq">
+        <div class="card-header">
+            <h3 class="card-title">🎚️ Frequency Surgeon</h3>
+            <button class="info-btn" onclick="toggleInfo('card-freq')">?</button>
+        </div>
+        
+        <div class="main-view">
+            <div class="quick-guide">
+    <strong>What:</strong> Generates pure sine waves to test drivers.<br>
+    <strong>Best:</strong> 20-60Hz for subwoofers, 10kHz+ for tweeters.<br>
+    <span class="warning">⚠️ Warning: High volume can overheat voice coils.</span>
+</div>
+
+            <div class="freq-value" id="freqDisplay">440 Hz</div>
+            <div class="freq-label" id="freqLabel" style="color: var(--primary);">Standard Tone</div>
+
+            <div class="slider-group">
+                <input type="range" id="freqSlider" min="20" max="2000" value="440" oninput="updateFreq(this.value)">
+                <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.75rem; color:#555;">
+                    <span>20 Hz</span>
+                    <span>2000 Hz</span>
+                </div>
+            </div>
+
+            <button id="toneBtn" class="action-btn" onclick="toggleTone()">PLAY CONTINUOUS TONE</button>
+        </div>
+
+        <div class="info-view">
+            <div class="tech-content">
+                <h4>Sine Waves & Driver Excursion</h4>
+                <p>We generate a mathematically pure <strong>Sine Wave</strong> without harmonics. </p>
+                <ul>
+                    <li><strong>Low Hz (20-100Hz):</strong> Creates high <strong>Cone Excursion</strong> (movement). This physically shakes the device components, useful for testing loose parts or "burn-in" for new headphones.</li>
+                    <li><strong>High Hz (1000Hz+):</strong> Tests the <strong>Transient Response</strong> of tweeters. If the sound crackles, the coil may be damaged.</li>
+                </ul>
+                <p><strong>Warning:</strong> Prolonged high volume at extreme frequencies can heat up voice coils.</p>
+            </div>
+        </div>
+                <footer class="app-footer">
+        <div class="footer-links">
+            <span class="footer-link" onclick="openModal('modal-about')">About Us</span>
+            <span class="footer-link" onclick="openModal('modal-privacy')">Privacy Policy</span>
+            <span class="footer-link" onclick="openModal('modal-contact')">Contact</span>
+            <span class="footer-link" onclick="openModal('modal-terms')">Terms of Use</span>
+    </div>
+        <div class="copyright">
+            &copy; 2026 Sonic Clean Pro. All Rights Reserved. <br>
+            Designed with ⚡ for Audio Purists.
+        </div>
+    </footer>
+
+    </div>
+
+
+        
+
+
+
+<script>
+    /**
+     * SONIC CLEAN PRO - CORE AUDIO ENGINE
+     * Premium rewritten logic for stability and performance.
+     */
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = new AudioContext();
+    /**
+     * SAFETY PROTOCOL CHECK
+     * Uses sessionStorage so it doesn't annoy the user on refresh,
+     * but shows up on a fresh tab/session.
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+        // Check if user has already agreed in this session
+        if (!sessionStorage.getItem('sonic_safety_agreed')) {
+            const modal = document.getElementById('safetyModal');
+            // Small delay for smooth entrance animation
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 100);
+        }
+    });
+
+    function acceptSafety() {
+        const modal = document.getElementById('safetyModal');
+        // Fade out
+        modal.style.opacity = '0';
+        modal.style.pointerEvents = 'none';
+        
+        // Mark as seen for this session
+        sessionStorage.setItem('sonic_safety_agreed', 'true');
+        
+        // Remove from DOM after transition
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 500);
+    }
+
+    // --- STATE MANAGEMENT ---
+    const state = {
+        ejecting: false,
+        ejectMode: 'standard',
+        spatialActive: false,
+        phaseInverted: false,
+        micActive: false,
+        toneActive: false
+    };
+
+    // --- NODES & REFS ---
+    let ejectOsc, ejectGain, ejectInterval;
+    let spatialOsc, spatialGain, rightInverterGain, mergerNode;
+    let gainFL, gainFR, gainRL, gainRR;
+    let toneOsc, toneGain;
+    let micStream, micSource, micAnalyser, micRafId;
+
+    // ==========================================
+    // 1. EJECTOR LOGIC
+    // ==========================================
+    
+    function setEjectMode(mode) {
+        state.ejectMode = mode;
+        // Update UI Tabs
+        document.querySelectorAll('#mode-standard, #mode-deep, #mode-dust').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`mode-${mode}`).classList.add('active');
+        
+        // Restart if currently running to apply new mode
+        if(state.ejecting) {
+            stopEjector();
+            startEjector();
+        }
+    }
+
+    function toggleEjector() {
+        if (state.ejecting) stopEjector();
+        else startEjector();
+    }
+
+    function startEjector() {
+        stopAllAudio(); // Exclusive mode
+        ensureAudioCtx();
+
+        ejectOsc = audioCtx.createOscillator();
+        ejectGain = audioCtx.createGain();
+
+        // Config based on mode
+        if (state.ejectMode === 'standard') {
+            ejectOsc.type = 'sawtooth';
+            ejectOsc.frequency.setValueAtTime(165, audioCtx.currentTime);
+            ejectGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+        } else if (state.ejectMode === 'deep') {
+            ejectOsc.type = 'square';
+            ejectOsc.frequency.setValueAtTime(140, audioCtx.currentTime);
+            ejectGain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+        } else if (state.ejectMode === 'dust') {
+            ejectOsc.type = 'sine';
+            ejectOsc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            // Pulsing Logic
+            let high = true;
+            ejectInterval = setInterval(() => {
+                const val = high ? 1.0 : 0.0;
+                ejectGain.gain.setTargetAtTime(val, audioCtx.currentTime, 0.02);
+                if (navigator.vibrate && high) navigator.vibrate(50);
+                high = !high;
+            }, 100);
+        }
+
+        ejectOsc.connect(ejectGain);
+        ejectGain.connect(audioCtx.destination);
+        ejectOsc.start();
+
+        state.ejecting = true;
+        updateEjectUI(true);
+    }
+
+    function stopEjector() {
+        if (ejectOsc) {
+            try { ejectOsc.stop(); ejectOsc.disconnect(); } catch(e){}
+            ejectOsc = null;
+        }
+        if (ejectInterval) clearInterval(ejectInterval);
+        if (navigator.vibrate) navigator.vibrate(0);
+        
+        state.ejecting = false;
+        updateEjectUI(false);
+    }
+
+    function updateEjectUI(isActive) {
+        const btn = document.getElementById('ejectBtn');
+        const txt = document.getElementById('ejectText');
+        if (isActive) {
+            btn.classList.add('active');
+            txt.innerText = "STOP";
+        } else {
+            btn.classList.remove('active');
+            txt.innerText = "ACTIVATE";
+        }
+    }
+
+    // ==========================================
+    // 2. SPATIAL AUDIO ENGINE (FIXED ROUTING)
+    // ==========================================
+    
+    let activeChannels = 2;
+
+    function updateSpatialConfig() {
+        const val = document.getElementById('speakerConfig').value;
+        if(val === 'quad') activeChannels = 4;
+        else if(val === '5.1') activeChannels = 6;
+        else activeChannels = 2;
+        
+        if (state.spatialActive) {
+            stopSpatial();
+            startSpatial();
+        }
+    }
+
+        function togglePhase() {
+        // 1. Toggle State
+        state.phaseInverted = !state.phaseInverted;
+        const btn = document.getElementById('btn-phase');
+        
+        // 2. Update Visual Button
+        if (state.phaseInverted) {
+            btn.innerText = "Phase: INVERTED ⚠️";
+            btn.classList.add('warning');
+        } else {
+            btn.innerText = "Phase: Normal";
+            btn.classList.remove('warning');
+        }
+
+        // 3. SMART FIX: Force Audio ON and CENTERED
+        // If audio isn't running, start it so the user hears the test immediately
+        if (!state.spatialActive) startSpatial();
+
+        // Visual: Snap the puck to the dead center
+        const dragNode = document.getElementById('dragNode');
+        dragNode.style.left = '50%';
+        dragNode.style.top = '50%';
+        document.getElementById('spatialCoords').innerText = "Center (Perfect Balance)";
+        
+        // Audio: Reset volumes to 50/50 to maximize cancellation effect
+        // (Simulating a drag to coordinates 0,0)
+        updateSpatialAudio(0, 0);
+
+        // 4. Apply the Phase Inversion to the audio node
+        if (rightInverterGain) {
+            // Use a faster transition (0.05s) for a snappier A/B comparison
+            rightInverterGain.gain.setTargetAtTime(state.phaseInverted ? -1 : 1, audioCtx.currentTime, 0.05);
+        }
+    }
+
+
+    function startSpatial() {
+        ensureAudioCtx();
+        // Create nodes
+        spatialOsc = audioCtx.createOscillator();
+        spatialOsc.type = 'sine';
+        spatialOsc.frequency.setValueAtTime(440, audioCtx.currentTime);
+
+        // Create Individual Speaker Gains
+        gainFL = audioCtx.createGain();
+        gainFR = audioCtx.createGain();
+        gainRL = audioCtx.createGain();
+        gainRR = audioCtx.createGain();
+        
+        // Mute initially
+        [gainFL, gainFR, gainRL, gainRR].forEach(g => g.gain.value = 0);
+
+        // Create Phase Inverter for Right Channels
+        rightInverterGain = audioCtx.createGain();
+        rightInverterGain.gain.value = state.phaseInverted ? -1 : 1;
+
+        // Channel Merger
+        mergerNode = audioCtx.createChannelMerger(activeChannels);
+
+        // Connect Oscillator to Split Gains
+        spatialOsc.connect(gainFL);
+        spatialOsc.connect(gainFR);
+        spatialOsc.connect(gainRL);
+        spatialOsc.connect(gainRR);
+
+        // --- ROUTING LOGIC ---
+        // Left Side: Direct to Ch 0
+        gainFL.connect(mergerNode, 0, 0); 
+        
+        // Right Side: Through Inverter to Ch 1
+        gainFR.connect(rightInverterGain);
+        rightInverterGain.connect(mergerNode, 0, 1);
+
+        if (activeChannels >= 4) {
+            // Hardware Quad Support
+            gainRL.connect(mergerNode, 0, 2);
+            gainRR.connect(mergerNode, 0, 3);
+        } else {
+            // Virtual Stereo (Simulate Rear)
+            const rearFilter = audioCtx.createBiquadFilter();
+            rearFilter.type = 'lowpass';
+            rearFilter.frequency.value = 1500; // Muffled rear
+            
+            gainRL.connect(rearFilter);
+            rearFilter.connect(mergerNode, 0, 0); // Mix Rear Left to Left
+
+            // Rear Right needs to go through Inverter if we want full right-side phase flip? 
+            // Or just mix it. Let's mix it to Right Inverter for consistency.
+            gainRR.connect(rearFilter);
+            // We can't reuse the same filter for both if we want to invert one. 
+            // For simplicity in virtual mode, we just mix RR to the right inverter.
+            gainRR.connect(rightInverterGain); 
+        }
+
+        mergerNode.connect(audioCtx.destination);
+        spatialOsc.start();
+        state.spatialActive = true;
+    }
+
+    function stopSpatial() {
+        if(spatialOsc) {
+            try { spatialOsc.stop(); spatialOsc.disconnect(); } catch(e){}
+            spatialOsc = null;
+        }
+        state.spatialActive = false;
+    }
+
+    // --- DRAG LOGIC ---
+    const pad = document.getElementById('spatialPad');
+    const dragNode = document.getElementById('dragNode');
+    let isDragging = false;
+
+    pad.addEventListener('mousedown', initDrag);
+    pad.addEventListener('touchstart', initDrag, {passive: false});
+    window.addEventListener('mousemove', handleDrag);
+    window.addEventListener('touchmove', handleDrag, {passive: false});
+    window.addEventListener('mouseup', endDrag);
+    window.addEventListener('touchend', endDrag);
+
+    function initDrag(e) {
+        if(e.type === 'touchstart') e.preventDefault();
+        stopAllAudio(); 
+        startSpatial();
+        isDragging = true;
+        handleDrag(e);
+    }
+
+    function handleDrag(e) {
+        if (!isDragging) return;
+        if(e.type === 'touchmove') e.preventDefault();
+
+        const rect = pad.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        let x = clientX - rect.left;
+        let y = clientY - rect.top;
+
+        // Clamp
+        x = Math.max(0, Math.min(x, rect.width));
+        y = Math.max(0, Math.min(y, rect.height));
+
+        // Visual Update
+        dragNode.style.left = x + 'px';
+        dragNode.style.top = y + 'px';
+
+        // Audio Math (-1 to 1)
+        let normX = (x / rect.width) * 2 - 1;
+        let normY = (y / rect.height) * 2 - 1;
+
+        updateSpatialAudio(normX, normY);
+        updateSpatialUI(normX, normY);
+    }
+
+    function endDrag() {
+        isDragging = false;
+        stopSpatial();
+        // Reset Visuals
+        dragNode.style.left = '50%';
+        dragNode.style.top = '50%';
+        document.getElementById('spatialCoords').innerText = "Center";
+        // Reset Icons
+        document.querySelectorAll('.speaker-icon').forEach(el => el.style.opacity = '0.2');
+    }
+
+    function updateSpatialAudio(x, z) {
+        // Bilinear Interpolation for 4 corners
+        // Normalize to 0-1
+        let nx = (x + 1) / 2;
+        let ny = (z + 1) / 2;
+
+        let volFL = (1 - nx) * (1 - ny);
+        let volFR = nx * (1 - ny);
+        let volRL = (1 - nx) * ny;
+        let volRR = nx * ny;
+
+        if(gainFL) gainFL.gain.setTargetAtTime(volFL, audioCtx.currentTime, 0.05);
+        if(gainFR) gainFR.gain.setTargetAtTime(volFR, audioCtx.currentTime, 0.05);
+        if(gainRL) gainRL.gain.setTargetAtTime(volRL, audioCtx.currentTime, 0.05);
+        if(gainRR) gainRR.gain.setTargetAtTime(volRR, audioCtx.currentTime, 0.05);
+
+        // Icon Feedback
+        document.getElementById('icon-tl').style.opacity = volFL > 0.4 ? 1 : 0.2;
+        document.getElementById('icon-tr').style.opacity = volFR > 0.4 ? 1 : 0.2;
+        document.getElementById('icon-bl').style.opacity = volRL > 0.4 ? 1 : 0.2;
+        document.getElementById('icon-br').style.opacity = volRR > 0.4 ? 1 : 0.2;
+        
+        // Pitch Mod based on height (Front/Back)
+        if(spatialOsc) spatialOsc.frequency.setTargetAtTime(400 + (z * -50), audioCtx.currentTime, 0.05);
+    }
+
+    function updateSpatialUI(x, y) {
+        const h = x < -0.3 ? "Left" : x > 0.3 ? "Right" : "Center";
+        const v = y < -0.3 ? "Front" : y > 0.3 ? "Rear" : "";
+        document.getElementById('spatialCoords').innerText = `${v} ${h}`.trim() || "Center";
+    }
+
+    function runSweep() {
+        stopAllAudio();
+        ensureAudioCtx();
+        const btn = document.getElementById('btn-sweep');
+        btn.innerText = "Sweeping...";
+        btn.classList.add('warning');
+
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        osc.frequency.setValueAtTime(20, now);
+        osc.frequency.exponentialRampToValueAtTime(20000, now + 5);
+        
+        g.gain.setValueAtTime(1, now);
+        g.gain.linearRampToValueAtTime(0, now + 5);
+
+        osc.start(now);
+        osc.stop(now + 5);
+
+        setTimeout(() => {
+            btn.innerText = "Run Sweep";
+            btn.classList.remove('warning');
+        }, 5000);
+    }
+
+    // ==========================================
+    // 3. MIC VISUALIZER (FIXED MEMORY LEAK)
+    // ==========================================
+
+    async function toggleMic() {
+        const btn = document.getElementById('micBtn');
+        
+        if(state.micActive) {
+            // STOP
+            if(micStream) micStream.getTracks().forEach(t => t.stop());
+            if(micRafId) cancelAnimationFrame(micRafId);
+            state.micActive = false;
+            btn.classList.remove('active');
+            btn.innerText = "START MIC TEST";
+            
+            // Clear canvas
+            const cvs = document.getElementById('micCanvas');
+            const ctx = cvs.getContext('2d');
+            ctx.fillStyle = '#080808';
+            ctx.fillRect(0,0,cvs.width, cvs.height);
+
+        } else {
+            // START
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({audio: true});
+                state.micActive = true;
+                btn.classList.add('active');
+                btn.innerText = "STOP TEST";
+                startMicLoop();
+            } catch(e) {
+                alert("Microphone access denied.");
+            }
+        }
+    }
+
+    function startMicLoop() {
+        // Reuse main context if possible, or create safe reference
+        micSource = audioCtx.createMediaStreamSource(micStream);
+        micAnalyser = audioCtx.createAnalyser();
+        micAnalyser.fftSize = 256;
+        micSource.connect(micAnalyser);
+
+        const cvs = document.getElementById('micCanvas');
+        const ctx = cvs.getContext('2d');
+        const bufferLength = micAnalyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        function draw() {
+            if(!state.micActive) return;
+            micRafId = requestAnimationFrame(draw);
+            micAnalyser.getByteFrequencyData(dataArray);
+
+            ctx.fillStyle = '#080808';
+            ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+            const barWidth = (cvs.width / bufferLength) * 2.5;
+            let x = 0;
+
+            for(let i = 0; i < bufferLength; i++) {
+                let barHeight = dataArray[i] / 255 * cvs.height;
+                
+                // Color Logic
+                if (barHeight > cvs.height * 0.8) ctx.fillStyle = '#FF0055'; // Clipping
+                else if (barHeight > cvs.height * 0.4) ctx.fillStyle = '#00F2FF'; // Good
+                else ctx.fillStyle = '#1c3d40'; // Low
+
+                ctx.fillRect(x, cvs.height - barHeight, barWidth, barHeight);
+                x += barWidth + 1;
+            }
+        }
+        draw();
+    }
+
+    // ==========================================
+    // 4. FREQUENCY SURGEON
+    // ==========================================
+
+    function toggleTone() {
+        const btn = document.getElementById('toneBtn');
+        if(state.toneActive) {
+            if(toneOsc) { try{toneOsc.stop();}catch(e){} toneOsc = null; }
+            state.toneActive = false;
+            btn.classList.remove('active');
+            btn.innerText = "PLAY CONTINUOUS TONE";
+        } else {
+            stopAllAudio();
+            ensureAudioCtx();
+            
+            toneOsc = audioCtx.createOscillator();
+            toneGain = audioCtx.createGain();
+            toneOsc.type = 'sine';
+            toneOsc.frequency.value = document.getElementById('freqSlider').value;
+            
+            toneOsc.connect(toneGain);
+            toneGain.connect(audioCtx.destination);
+            toneOsc.start();
+            
+            state.toneActive = true;
+            btn.classList.add('active');
+            btn.innerText = "STOP TONE";
+        }
+    }
+
+    function updateFreq(val) {
+        document.getElementById('freqDisplay').innerText = val + " Hz";
+        const label = document.getElementById('freqLabel');
+        
+        // Live update if playing
+        if(toneOsc) toneOsc.frequency.setTargetAtTime(val, audioCtx.currentTime, 0.05);
+
+        // Hints
+        if (val < 100) { label.innerText = "Sub-Bass / Heavy Vibration"; label.style.color = "#fff"; }
+        else if (val >= 140 && val <= 170) { label.innerText = "🌟 EJECTION SWEET SPOT 🌟"; label.style.color = "#FF0055"; }
+        else if (val > 1000) { label.innerText = "Micro Droplet Mist"; label.style.color = "#00F2FF"; }
+        else { label.innerText = "Standard Tone"; label.style.color = "#00F2FF"; }
+    }
+
+    // --- UTILS ---
+    function ensureAudioCtx() {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function stopAllAudio() {
+        stopEjector();
+        stopSpatial();
+        if(state.toneActive) toggleTone();
+        // Mic is independent, allowed to run
+    }
+        // --- INFO FLIP LOGIC (3D ANIMATION) ---
+    function toggleInfo(cardId) {
+        const card = document.getElementById(cardId);
+        const btn = card.querySelector('.info-btn');
+        
+        // 1. First Half: Rotate to 90deg (Edge on)
+        card.style.transition = "transform 0.25s ease-in";
+        card.style.transform = "perspective(1000px) rotateY(90deg)";
+
+        // 2. Wait for the card to be invisible (250ms), then swap content
+        setTimeout(() => {
+            // Toggle the content visibility class
+            card.classList.toggle('flipped');
+
+            // Change the icon
+            if (card.classList.contains('flipped')) {
+                btn.innerHTML = "←"; 
+            } else {
+                btn.innerHTML = "?";
+            }
+
+            // 3. Snap to -90deg instantly (without animation) so we can flip back "in"
+            card.style.transition = "none"; 
+            card.style.transform = "perspective(1000px) rotateY(-90deg)";
+
+            // Force browser to register the change (Reflow)
+            void card.offsetWidth;
+
+            // 4. Second Half: Rotate back to 0deg
+            card.style.transition = "transform 0.25s ease-out";
+            card.style.transform = "perspective(1000px) rotateY(0deg)";
+
+        }, 250);
+    }
+    // --- MODAL SYSTEM ---
+    function openModal(id) {
+        document.getElementById(id).classList.add('active');
+        // Prevent background scrolling
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+        // Restore scrolling
+        document.body.style.overflow = 'auto';
+    }
+
+    // Close modal if clicking outside the box
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            event.target.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+
+
+</script>
+</body>
+</html>
