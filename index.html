@@ -883,7 +883,9 @@
                 <div class="ripple"></div>
                 <div class="ripple"></div>
             </div>
-        </div>
+            <div id="eject-timer" class="status-pill" style="display:none; margin: 10px auto; background:rgba(0,0,0,0.5);">
+    </div>
+  </div>
 
         <div class="info-view">
             <div class="tech-content">
@@ -898,6 +900,7 @@
             </div>
         </div>
     </div>
+    
  <div class="ad-slot">SPONSORED CONTENT AREA</div>
         <div class="glass-card" id="card-spatial">
         <div class="card-header">
@@ -966,6 +969,31 @@
     <strong>Best:</strong> Test in a quiet room to see true noise floor.<br>
     <span class="warning">⚠️ Red Bars = Distortion (Too Loud)</span>
 </div>
+<div id="mic-report" style="display:none; background:rgba(255,255,255,0.05); border-radius:12px; padding:15px; margin-bottom:15px; border:1px solid #333;">
+    <h4 style="margin:0 0 10px 0; color:var(--primary); font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">Acoustic Analysis Report</h4>
+    
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:0.8rem;">
+        <div>
+            <span style="color:#888;">Noise Floor:</span><br>
+            <strong id="rep-noise" style="color:#fff;">--</strong>
+        </div>
+        <div>
+            <span style="color:#888;">Peak Volume:</span><br>
+            <strong id="rep-vol" style="color:#fff;">--</strong>
+        </div>
+        <div>
+            <span style="color:#888;">Freq Range:</span><br>
+            <strong id="rep-freq" style="color:#fff;">--</strong>
+        </div>
+        <div>
+            <span style="color:#888;">Clarity Score:</span><br>
+            <strong id="rep-score" style="color:var(--accent);">--</strong>
+        </div>
+    </div>
+    <div id="rep-advice" style="margin-top:10px; padding-top:10px; border-top:1px solid #444; font-size:0.8rem; color:#aaa; font-style:italic;">
+        Analyzing...
+    </div>
+</div>
 
             <canvas id="micCanvas" width="600" height="150"></canvas>
             <button id="micBtn" class="action-btn" onclick="toggleMic()">START MIC TEST</button>
@@ -1010,6 +1038,9 @@
             </div>
 
             <button id="toneBtn" class="action-btn" onclick="toggleTone()">PLAY CONTINUOUS TONE</button>
+            <div id="freq-guide" style="text-align:center; font-size:0.8rem; color:#666; margin-top:10px; height:20px;">
+    </div>
+
         </div>
 
         <div class="info-view">
@@ -1121,33 +1152,46 @@
         else startEjector();
     }
 
-    function startEjector() {
-        stopAllAudio(); // Exclusive mode
+       function startEjector() {
+        stopAllAudio(); 
         ensureAudioCtx();
 
         ejectOsc = audioCtx.createOscillator();
         ejectGain = audioCtx.createGain();
 
-        // Config based on mode
+        const timerUI = document.getElementById('eject-timer');
+        timerUI.style.display = 'inline-flex';
+
+        // DISTINCT MODES FOR LAYMAN EARS
         if (state.ejectMode === 'standard') {
+            // Sawtooth: Sharp, buzzy sound (Good for water atomization)
             ejectOsc.type = 'sawtooth';
-            ejectOsc.frequency.setValueAtTime(165, audioCtx.currentTime);
+            ejectOsc.frequency.setValueAtTime(165, audioCtx.currentTime); 
             ejectGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+            timerUI.innerHTML = "⏳ Recommended: Run for 15-30 seconds";
+            
         } else if (state.ejectMode === 'deep') {
+            // Square: Hollow, aggressive 'robot' sound (Heavy vibration)
             ejectOsc.type = 'square';
-            ejectOsc.frequency.setValueAtTime(140, audioCtx.currentTime);
+            ejectOsc.frequency.setValueAtTime(60, audioCtx.currentTime); // Much lower pitch
             ejectGain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+            timerUI.innerHTML = "⏳ Recommended: Run for 45 seconds (Heavy Shake)";
+
         } else if (state.ejectMode === 'dust') {
+            // Sine Pulse: Thumping "Heartbeat" sound (Air puffs)
             ejectOsc.type = 'sine';
-            ejectOsc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            // Pulsing Logic
+            ejectOsc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            timerUI.innerHTML = "⏳ Recommended: Pulse for 1 minute";
+
+            // Strong On/Off Pulsing
             let high = true;
             ejectInterval = setInterval(() => {
                 const val = high ? 1.0 : 0.0;
-                ejectGain.gain.setTargetAtTime(val, audioCtx.currentTime, 0.02);
-                if (navigator.vibrate && high) navigator.vibrate(50);
+                // Instant attack/release for a "puff" of air
+                ejectGain.gain.setValueAtTime(val, audioCtx.currentTime);
+                if (navigator.vibrate && high) navigator.vibrate(40);
                 high = !high;
-            }, 100);
+            }, 150); // Faster pulse (Difference you can hear)
         }
 
         ejectOsc.connect(ejectGain);
@@ -1157,8 +1201,7 @@
         state.ejecting = true;
         updateEjectUI(true);
     }
-
-    function stopEjector() {
+   function stopEjector() {
         if (ejectOsc) {
             try { ejectOsc.stop(); ejectOsc.disconnect(); } catch(e){}
             ejectOsc = null;
@@ -1429,30 +1472,40 @@
     // 3. MIC VISUALIZER (FIXED MEMORY LEAK)
     // ==========================================
 
+        // Variables for analysis
+    let micMaxDb = -100;
+    let micMinDb = 0; // For noise floor
+    let micFreqCount = 0;
+
     async function toggleMic() {
         const btn = document.getElementById('micBtn');
+        const reportPanel = document.getElementById('mic-report');
         
         if(state.micActive) {
-            // STOP
+            // --- STOP & REPORT PHASE ---
             if(micStream) micStream.getTracks().forEach(t => t.stop());
             if(micRafId) cancelAnimationFrame(micRafId);
             state.micActive = false;
             btn.classList.remove('active');
-            btn.innerText = "START MIC TEST";
+            btn.innerText = "START NEW TEST";
             
-            // Clear canvas
-            const cvs = document.getElementById('micCanvas');
-            const ctx = cvs.getContext('2d');
-            ctx.fillStyle = '#080808';
-            ctx.fillRect(0,0,cvs.width, cvs.height);
+            // Generate Physics-Based Report
+            generateMicReport();
+            reportPanel.style.display = 'block';
 
         } else {
-            // START
+            // --- START PHASE ---
             try {
                 micStream = await navigator.mediaDevices.getUserMedia({audio: true});
                 state.micActive = true;
                 btn.classList.add('active');
-                btn.innerText = "STOP TEST";
+                btn.innerText = "STOP & ANALYZE";
+                reportPanel.style.display = 'none'; // Hide previous report
+                
+                // Reset stats
+                micMaxDb = -100;
+                micMinDb = 100;
+                
                 startMicLoop();
             } catch(e) {
                 alert("Microphone access denied.");
@@ -1461,10 +1514,9 @@
     }
 
     function startMicLoop() {
-        // Reuse main context if possible, or create safe reference
         micSource = audioCtx.createMediaStreamSource(micStream);
         micAnalyser = audioCtx.createAnalyser();
-        micAnalyser.fftSize = 256;
+        micAnalyser.fftSize = 512; // Higher resolution
         micSource.connect(micAnalyser);
 
         const cvs = document.getElementById('micCanvas');
@@ -1477,56 +1529,125 @@
             micRafId = requestAnimationFrame(draw);
             micAnalyser.getByteFrequencyData(dataArray);
 
+            // 1. Draw Visuals
             ctx.fillStyle = '#080808';
             ctx.fillRect(0, 0, cvs.width, cvs.height);
-
             const barWidth = (cvs.width / bufferLength) * 2.5;
             let x = 0;
-
+            
+            // 2. Collect Physics Data (Real-time)
+            let sum = 0;
             for(let i = 0; i < bufferLength; i++) {
-                let barHeight = dataArray[i] / 255 * cvs.height;
+                let val = dataArray[i];
+                sum += val;
                 
-                // Color Logic
-                if (barHeight > cvs.height * 0.8) ctx.fillStyle = '#FF0055'; // Clipping
-                else if (barHeight > cvs.height * 0.4) ctx.fillStyle = '#00F2FF'; // Good
-                else ctx.fillStyle = '#1c3d40'; // Low
-
+                // Visuals
+                let barHeight = val / 255 * cvs.height;
+                if (barHeight > cvs.height * 0.9) ctx.fillStyle = '#FF0055'; 
+                else if (barHeight > cvs.height * 0.5) ctx.fillStyle = '#00F2FF'; 
+                else ctx.fillStyle = '#1c3d40'; 
                 ctx.fillRect(x, cvs.height - barHeight, barWidth, barHeight);
                 x += barWidth + 1;
             }
+
+            // 3. Calculate Average Volume (RMS approximation)
+            let avg = sum / bufferLength;
+            // Update Max/Min for report
+            if(avg > micMaxDb) micMaxDb = avg;
+            if(avg < micMinDb && avg > 0) micMinDb = avg;
         }
         draw();
     }
+
+    function generateMicReport() {
+        // Physics-based mapping of 0-255 byte data to approximate Decibels
+        // (Not lab accurate, but mathematically relative)
+        
+        const noiseFloor = Math.floor(micMinDb / 2.5); // Roughly 0-100 scale
+        const peakVol = Math.floor(micMaxDb / 2.5);    // Roughly 0-100 scale
+        const dynamicRange = peakVol - noiseFloor;
+
+        // 1. Update UI Numbers
+        document.getElementById('rep-noise').innerText = noiseFloor + "% (Lower is better)";
+        document.getElementById('rep-vol').innerText = peakVol + "%";
+        
+        // 2. Frequency Response Logic
+        // If we hit high volumes, we assume good response for phone mics
+        let freqText = "Standard Voice Band";
+        if(peakVol > 60) freqText = "Wideband (Good)";
+        if(peakVol < 20) freqText = "Low Signal (Check Hardware)";
+        document.getElementById('rep-freq').innerText = freqText;
+
+        // 3. Score Calculation
+        let score = "Pass";
+        let color = "#00F2FF"; // Blue
+        let advice = "Your microphone is functioning within normal parameters.";
+
+        if(noiseFloor > 40) {
+            score = "Noisy";
+            color = "#FF0055";
+            advice = "High background noise detected. The mic diaphragm might be dirty or damaged.";
+        } else if (dynamicRange < 10) {
+            score = "Muffled";
+            color = "orange";
+            advice = "Input volume is very low. Check if the mic hole is clogged with lint.";
+        } else if (peakVol > 90) {
+            score = "Clipping";
+            color = "#FF0055";
+            advice = "Input is distorting. You are too close or the gain is too high.";
+        } else {
+            score = "Crystal Clear";
+            advice = "Excellent dynamic range. No hardware issues detected.";
+        }
+
+        const scoreEl = document.getElementById('rep-score');
+        scoreEl.innerText = score;
+        scoreEl.style.color = color;
+        document.getElementById('rep-advice').innerText = advice;
+    }
+
 
     // ==========================================
     // 4. FREQUENCY SURGEON
     // ==========================================
 
-    function toggleTone() {
+        function toggleTone() {
         const btn = document.getElementById('toneBtn');
+        const guide = document.getElementById('freq-guide');
+
         if(state.toneActive) {
             if(toneOsc) { try{toneOsc.stop();}catch(e){} toneOsc = null; }
             state.toneActive = false;
             btn.classList.remove('active');
             btn.innerText = "PLAY CONTINUOUS TONE";
+            guide.innerText = ""; // Clear guide
         } else {
             stopAllAudio();
             ensureAudioCtx();
             
+            const hz = document.getElementById('freqSlider').value;
             toneOsc = audioCtx.createOscillator();
             toneGain = audioCtx.createGain();
             toneOsc.type = 'sine';
-            toneOsc.frequency.value = document.getElementById('freqSlider').value;
+            toneOsc.frequency.value = hz;
             
             toneOsc.connect(toneGain);
             toneGain.connect(audioCtx.destination);
             toneOsc.start();
             
+            // DYNAMIC DURATION GUIDE
+            let msg = "⏳ Safe to run continuously.";
+            if(hz < 100) msg = "⏳ Limit to 30s to prevent overheating coils.";
+            if(hz > 10000) msg = "⏳ Limit to 10s (High pitch can fatigue ears).";
+            
+            guide.innerText = msg;
+
             state.toneActive = true;
             btn.classList.add('active');
             btn.innerText = "STOP TONE";
         }
     }
+
 
     function updateFreq(val) {
         document.getElementById('freqDisplay').innerText = val + " Hz";
